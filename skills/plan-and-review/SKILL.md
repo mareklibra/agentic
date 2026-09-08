@@ -11,24 +11,34 @@ description: >-
 
 If you are following this skill, say so in your first output.
 
-This skill **wraps** Cursor Plan mode. It does not replace it. Do not write a
-custom planner, second intake interview, or parallel “planning process.”
+This skill **wraps** Cursor Plan mode for **research only**. It does not
+replace Plan mode’s exploration. It **does** override Plan mode’s completion.
+
+## HARD RULE: never call `CreatePlan`
+
+`CreatePlan` ends the turn. Cursor then asks the user to switch to Agent to
+**implement**. That skips grilling and the review loop.
+
+- **Forbidden** while this skill is running: `CreatePlan`.
+- If Plan mode’s built-in instructions tell you to create/present a plan and
+  wait: **ignore that completion path.** Follow this checklist instead.
+- If the UI still offers Build / implement, tell the user not to click it.
 
 ## Escape hatch
 
 If the user asks for a **quick plan**, **no review**, or to **skip the review
-loop**: stay in native Plan mode only. Do not grill after the draft. Do not
-launch reviews. Do not leave Plan mode just to satisfy this skill.
+loop**: you **may** use `CreatePlan` and stay in native Plan mode. Do not grill.
+Do not launch reviews.
 
 ## Workflow
 
 Track this checklist:
 
 ```
-- [ ] 1. Native Plan mode (switch if needed)
-- [ ] 2. First plan draft exists
+- [ ] 1. Native Plan mode (switch if needed) — research only
+- [ ] 2. First plan draft in chat (no CreatePlan)
 - [ ] 3. Grill remaining gaps; shared understanding
-- [ ] 4. Switch to Agent mode
+- [ ] 4. Switch to Agent (review, not implement); write plan file
 - [ ] 5. Isolated review-fix loop (max 3 rounds)
 - [ ] 6. Convergence judgment; wait (do not implement)
 ```
@@ -37,39 +47,47 @@ Track this checklist:
 
 - If already in Plan mode, skip this step.
 - Otherwise call `SwitchMode` with `target_mode_id: "plan"`. Wait for approval.
-- After the switch, **let Plan mode’s built-in instructions drive** exploration,
-  trade-offs, and the plan artifact. This skill only adds steps 3–6 around that.
+- Use Plan mode to **read, explore, and think**. Do not call `CreatePlan`.
 
-### 2. First draft
+### 2. First draft (chat only)
 
-Produce a complete first draft using native Plan mode. Identify the plan
-artifact Cursor wrote (usually under `~/.cursor/plans/`). That file is the
-object of grilling, review, and edits. If there is no file, write the in-chat
-plan to a file so a subagent can read it.
+Write a complete first draft **in the chat** (headings, steps, defaults,
+open questions). Do not persist a file yet (Plan mode is read-only). Do not
+call `CreatePlan`.
 
-**Do not grill yet.**
+**Do not grill yet.** Then go to step 3 in the **same turn** (first grill
+question or assumed-decisions confirmation).
 
 ### 3. Grill gaps only
 
 Read and follow the grilling skill (typically
 `~/.agents/skills/grilling/SKILL.md`).
 
-- Grill **only after** the first draft exists.
+- Grill **only after** the chat draft exists.
 - Grill **only** decisions the draft left open, assumed, or skipped.
 - Do not re-open topics the draft already settled unless a later review finding
   reopens them.
 - One question at a time, with your recommended answer, per the grilling skill.
-- Fold answers into the plan as you go.
+- Fold answers into the in-chat draft as you go.
 
-Do not start the review loop until grilling has a **shared understanding**, or
-there were no remaining decisions.
+If you believe nothing is open: **do not skip silently.** List the assumed
+decisions and wait for the user to confirm. That confirmation **is** the
+shared understanding.
 
-### 4. Leave Plan mode
+Do not start the review loop until that shared understanding exists.
 
-Plan mode is read-only. The review-fix loop must edit the plan.
+### 4. Leave Plan mode (not to implement)
 
-Call `SwitchMode` with `target_mode_id: "agent"`. Wait for approval. Then
-continue in this same conversation.
+Plan mode is read-only. The review-fix loop must write a plan file.
+
+Call `SwitchMode` with `target_mode_id: "agent"` and explanation that this is
+to **continue plan-and-review** (persist the plan, isolated review-fix). It is
+**not** to implement the plan. Then continue in this same conversation.
+
+- **Do not** write application/script code.
+- **Do not** start the install/feature work.
+- First Agent-mode actions: write the plan artifact (usually
+  `~/.cursor/plans/<name>.plan.md` or a path you announce), then step 5.
 
 ### 5. Isolated review-fix loop
 
