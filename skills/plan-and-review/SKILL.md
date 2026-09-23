@@ -48,12 +48,29 @@ Track this checklist:
 - If already in Plan mode, skip this step.
 - Otherwise call `SwitchMode` with `target_mode_id: "plan"`. Wait for approval.
 - Use Plan mode to **read, explore, and think**. Do not call `CreatePlan`.
+- Do not shorten research. The lazy-plan bar in step 2 applies **after** you
+  know what already exists and what the change must touch.
 
 ### 2. First draft (chat only)
 
 Write a complete first draft **in the chat** (headings, steps, defaults,
 open questions). Do not persist a file yet (Plan mode is read-only). Do not
 call `CreatePlan`.
+
+**Lazy-plan bar** (after research, not instead of it). Stop at the first
+option that holds:
+
+- Skip speculative work (YAGNI). Name skipped work in one line: not doing X
+  until Y.
+- Reuse helpers, types, and patterns already in this codebase.
+- Prefer stdlib, native platform features, and already-installed deps over
+  new libraries or custom subsystems.
+- Fewest new files and fewest steps. Deletion / shrinking an existing path
+  over a parallel new one.
+- No unrequested layers: interface-of-one, factory-of-one, config for a
+  value that never changes, scaffolding “for later.”
+- Do **not** skip trust-boundary validation, data-loss handling, security,
+  or anything the user explicitly asked for.
 
 **Do not grill yet.** Then go to step 3 in the **same turn** (first grill
 question or assumed-decisions confirmation).
@@ -65,6 +82,8 @@ Read and follow the grilling skill (typically
 
 - Grill **only after** the chat draft exists.
 - Grill **only** decisions the draft left open, assumed, or skipped.
+  If the draft already cut extra scope, list that under assumed decisions;
+  do not grill to grow the plan.
 - Do not re-open topics the draft already settled unless a later review finding
   reopens them.
 - One question at a time, with your recommended answer, per the grilling skill.
@@ -112,7 +131,15 @@ Adapter (put this in the Task prompt, verbatim in substance):
 
 - The subject is the **plan artifact**, not a git PR/branch.
 - Follow `review-pr` for severity (`CRITICAL` / `WARNING` / `SUGGESTION`),
-  focus areas, challenging false positives, completeness, and minimal change.
+  challenging false positives, completeness of **the chosen scope**,
+  minimal change, and reusability.
+- Prefer findings that **shrink** the plan over findings that **add** work.
+  Flag over-scope: new deps, new abstractions, extra phases, reimplementation
+  of something already in the repo, speculative “for later” work.
+- For this review, skip `review-pr` **Future development** and similar
+  “also add …” items. Extra architecture in the plan is **WARNING** (drop
+  it unless a grill decision kept it). “Have you thought about also adding
+  …” is **SUGGESTION** at most. Do not raise YAGNI to **CRITICAL**.
 - Report findings against **plan sections/headings**, not git line diffs.
 - Skip GitHub deep-links, compare-to-main, approval-to-merge, and “never
   open a PR” posting rules. Still emit the severity summary table.
@@ -129,11 +156,12 @@ chat history.
 
 #### Main-agent validity bar
 
-- **Accept** if it changes scope, steps, risks, sequencing, missing work, or
-  contradictions.
-- **Reject** if false, duplicate, already addressed, or an implementation nit
-  that does not belong in a plan.
-- **Defer** only if it is real but belongs after implementation starts.
+- **Accept** shrinkage, reuse, “this step is YAGNI,” missing work that the
+  chosen scope still needs, sequencing, real risks, or contradictions.
+- **Reject** if false, duplicate, already addressed, an implementation nit,
+  future-proofing, or a new layer/dep not required by the request or grill.
+- **Defer** only if it is real but belongs after implementation starts
+  (perf knobs, extra tests, polish).
 
 One-line reason per finding. Suggestions-only: do not auto-apply leftover
 `SUGGESTION`s unless they are required for the plan to be coherent.
@@ -153,7 +181,8 @@ Then, in this chat:
   fired).
 - Recommend whether **more review rounds** are worth it. If the cap was hit
   with leftover CRITICAL/WARNING, say so explicitly — do not pretend it
-  converged.
+  converged. If leftovers are over-build vs missing necessary work, say
+  which.
 - **Do not implement.** Wait for the user.
 
 The user may interrupt at any time; treat that as a stop.
