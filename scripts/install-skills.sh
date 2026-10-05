@@ -4,7 +4,10 @@ shopt -s nullglob
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_SRC="${REPO_ROOT}/skills"
-DEST_DIR="${HOME}/.cursor/skills"
+DEST_DIRS=(
+  "${HOME}/.cursor/skills"
+  "${HOME}/.claude/skills"
+)
 
 added=0
 already=0
@@ -37,7 +40,38 @@ if [[ ! -d "$SKILLS_SRC" ]]; then
   exit 1
 fi
 
-mkdir -p "$DEST_DIR"
+install_skill() {
+  local name="$1"
+  local expected="$2"
+  local dest_dir="$3"
+  local dest="${dest_dir}/${name}"
+
+  if [[ ! -e "$dest" && ! -L "$dest" ]]; then
+    ln -s "$expected" "$dest"
+    added=$((added + 1))
+    return
+  fi
+
+  if [[ -L "$dest" && ! -e "$dest" ]]; then
+    report_collision "$name" "$dest" "$expected"
+    return
+  fi
+
+  if [[ -L "$dest" ]]; then
+    if actual="$(realpath "$dest" 2>/dev/null)" && [[ "$actual" == "$expected" ]]; then
+      already=$((already + 1))
+      return
+    fi
+    report_collision "$name" "$dest" "$expected"
+    return
+  fi
+
+  report_collision "$name" "$dest" "$expected"
+}
+
+for dest_dir in "${DEST_DIRS[@]}"; do
+  mkdir -p "$dest_dir"
+done
 
 for skill_dir in "${SKILLS_SRC}"/*/; do
   if [[ ! -f "${skill_dir}SKILL.md" ]]; then
@@ -46,29 +80,10 @@ for skill_dir in "${SKILLS_SRC}"/*/; do
 
   name="$(basename "$skill_dir")"
   expected="$(realpath "$skill_dir")"
-  dest="${DEST_DIR}/${name}"
 
-  if [[ ! -e "$dest" && ! -L "$dest" ]]; then
-    ln -s "$expected" "$dest"
-    added=$((added + 1))
-    continue
-  fi
-
-  if [[ -L "$dest" && ! -e "$dest" ]]; then
-    report_collision "$name" "$dest" "$expected"
-    continue
-  fi
-
-  if [[ -L "$dest" ]]; then
-    if actual="$(realpath "$dest" 2>/dev/null)" && [[ "$actual" == "$expected" ]]; then
-      already=$((already + 1))
-      continue
-    fi
-    report_collision "$name" "$dest" "$expected"
-    continue
-  fi
-
-  report_collision "$name" "$dest" "$expected"
+  for dest_dir in "${DEST_DIRS[@]}"; do
+    install_skill "$name" "$expected" "$dest_dir"
+  done
 done
 
 printf 'added=%s already=%s collisions=%s\n' "$added" "$already" "$collisions"

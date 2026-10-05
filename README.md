@@ -8,7 +8,7 @@ My personal set of skills.
 ./scripts/install-skills.sh
 ```
 
-Symlinks each skill into `~/.cursor/skills`. Idempotent; reports name collisions without overwriting.
+Symlinks each skill into `~/.cursor/skills` and `~/.claude/skills`. Idempotent; reports name collisions without overwriting.
 
 ## External
 Grilling: https://github.com/mattpocock/skills
