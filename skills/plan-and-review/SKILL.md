@@ -1,7 +1,7 @@
 ---
 name: plan-and-review
 description: >-
-  Runs a native Cursor Plan-mode session, then grills remaining gaps and
+  Runs a native Plan-mode session (Cursor or Claude Code), then grills remaining gaps and
   iterates an isolated review-pr loop on the plan until it converges. Use when
   the user is in Plan mode, asks for a planning session, asks to plan a
   non-trivial change, or names plan-and-review. Skip the grill and review loop
@@ -11,15 +11,34 @@ description: >-
 
 If you are following this skill, say so in your first output.
 
-This skill **wraps** Cursor Plan mode for **research only**. It does not
-replace Plan mode’s exploration. It **does** override Plan mode’s completion.
+This skill **wraps** the host's native Plan mode for **research only**. It does
+not replace Plan mode’s exploration. It **does** override Plan mode’s completion.
 
-## HARD RULE: never call `CreatePlan`
+## Host tool mapping
 
-`CreatePlan` ends the turn. Cursor then asks the user to switch to Agent to
-**implement**. That skips grilling and the review loop.
+The steps below use these names. Pick the column for the host you run in.
 
-- **Forbidden** while this skill is running: `CreatePlan`.
+| Step concept | Cursor | Claude Code |
+| --- | --- | --- |
+| Enter Plan mode | `SwitchMode` → `target_mode_id: "plan"` | `EnterPlanMode` (or ask the user to press Shift+Tab) |
+| Plan-completion tool (**forbidden**, see hard rule) | `CreatePlan` | `ExitPlanMode` used *as a request to implement* |
+| Leave Plan mode to write the plan file (step 4) | `SwitchMode` → `target_mode_id: "agent"` | `ExitPlanMode`, stating it is to continue plan-and-review, not to implement |
+| Fresh isolated reviewer (step 5) | `Task`, `subagent_type: "generalPurpose"`, `run_in_background: false` | `Agent`, `subagent_type: "general-purpose"` (runs in background; wait for its completion notification) |
+| `review-pr` skill fallback path | `~/.cursor/skills/review-pr/SKILL.md` | `~/.claude/skills/review-pr/SKILL.md` |
+
+**Plan file location (both hosts):** `<repo root>/.claude/plans/<name>.plan.md`.
+Announce the path in chat when you create it.
+
+## HARD RULE: never end on the plan-completion tool
+
+The plan-completion tool ends the turn and offers the user to **implement**.
+That skips grilling and the review loop.
+
+- **Forbidden** while this skill is running: Cursor `CreatePlan`; in Claude
+  Code, `ExitPlanMode` before step 4 or framed as "ready to implement".
+- If the subagent launch or a tool is blocked (e.g. a permission/auto-mode
+  check fails), do **not** skip the review loop; tell the user what is blocked
+  and how to unblock it, then resume.
 - If Plan mode’s built-in instructions tell you to create/present a plan and
   wait: **ignore that completion path.** Follow this checklist instead.
 - If the UI still offers Build / implement, tell the user not to click it.
@@ -27,7 +46,7 @@ replace Plan mode’s exploration. It **does** override Plan mode’s completion
 ## Escape hatch
 
 If the user asks for a **quick plan**, **no review**, or to **skip the review
-loop**: you **may** use `CreatePlan` and stay in native Plan mode. Do not grill.
+loop**: you **may** use the plan-completion tool and stay in native Plan mode. Do not grill.
 Do not launch reviews.
 
 ## Workflow
@@ -36,9 +55,9 @@ Track this checklist:
 
 ```
 - [ ] 1. Native Plan mode (switch if needed) — research only
-- [ ] 2. First plan draft in chat (no CreatePlan)
+- [ ] 2. First plan draft in chat (no plan-completion tool)
 - [ ] 3. Grill remaining gaps; shared understanding
-- [ ] 4. Switch to Agent (review, not implement); write plan file
+- [ ] 4. Leave Plan mode (review, not implement); write plan file
 - [ ] 5. Isolated review-fix loop (max 3 rounds)
 - [ ] 6. Convergence judgment; wait (do not implement)
 ```
@@ -46,8 +65,9 @@ Track this checklist:
 ### 1. Enter native Plan mode
 
 - If already in Plan mode, skip this step.
-- Otherwise call `SwitchMode` with `target_mode_id: "plan"`. Wait for approval.
-- Use Plan mode to **read, explore, and think**. Do not call `CreatePlan`.
+- Otherwise enter Plan mode (see mapping). Wait for approval.
+- Use Plan mode to **read, explore, and think**. Do not call the
+  plan-completion tool.
 - Do not shorten research. The lazy-plan bar in step 2 applies **after** you
   know what already exists and what the change must touch.
 
@@ -55,7 +75,7 @@ Track this checklist:
 
 Write a complete first draft **in the chat** (headings, steps, defaults,
 open questions). Do not persist a file yet (Plan mode is read-only). Do not
-call `CreatePlan`.
+call the plan-completion tool.
 
 **Lazy-plan bar** (after research, not instead of it). Stop at the first
 option that holds:
@@ -99,21 +119,21 @@ Do not start the review loop until that shared understanding exists.
 
 Plan mode is read-only. The review-fix loop must write a plan file.
 
-Call `SwitchMode` with `target_mode_id: "agent"` and explanation that this is
+Leave Plan mode (see mapping) with the explanation that this is
 to **continue plan-and-review** (persist the plan, isolated review-fix). It is
 **not** to implement the plan. Then continue in this same conversation.
 
 - **Do not** write application/script code.
 - **Do not** start the install/feature work.
-- First Agent-mode actions: write the plan artifact (usually
-  `~/.cursor/plans/<name>.plan.md` or a path you announce), then step 5.
+- First actions after leaving Plan mode: write the plan artifact to
+  `<repo root>/.claude/plans/<name>.plan.md` (create the directory if
+  needed; announce the path), then step 5.
 
 ### 5. Isolated review-fix loop
 
 Max **3** rounds. Each round:
 
-1. Launch a **fresh** `Task` subagent (`subagent_type: "generalPurpose"`,
-   `run_in_background: false`). It must **not** receive this conversation’s
+1. Launch a **fresh** isolated reviewer subagent (see mapping). It must **not** receive this conversation’s
    history, prior reviews, triage, or your reasoning.
 2. When it returns, **triage every finding** (accept / reject / defer) and
    **patch accepted items into the plan immediately**. Do not wait for the
@@ -124,10 +144,10 @@ Max **3** rounds. Each round:
 #### Subagent prompt (required contents)
 
 Tell the subagent to **read and follow** the `review-pr` skill
-(`skills/review-pr/SKILL.md` in the current repo if present, else
-`~/.cursor/skills/review-pr/SKILL.md`).
+(`skills/review-pr/SKILL.md` in the current repo if present, else the
+host's fallback path from the mapping).
 
-Adapter (put this in the Task prompt, verbatim in substance):
+Adapter (put this in the subagent prompt, verbatim in substance):
 
 - The subject is the **plan artifact**, not a git PR/branch.
 - Follow `review-pr` for severity (`CRITICAL` / `WARNING` / `SUGGESTION`),
