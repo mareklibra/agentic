@@ -11,4 +11,6 @@ My personal set of skills.
 Symlinks each skill into `~/.cursor/skills` and `~/.claude/skills`. Idempotent; reports name collisions without overwriting.
 
 ## External
-Grilling: https://github.com/mattpocock/skills
+- Grilling: https://github.com/mattpocock/skills
+- local review: https://github.com/deployhq/review-council
+- 
