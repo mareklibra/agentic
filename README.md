@@ -53,3 +53,7 @@ brew install yq   # or see https://github.com/mikefarah/yq#install
 
 No custom config is in use — Review Council runs entirely on its built-in defaults (all reviewers enabled, auto-detected by what's installed). Run `/review-council:setup` to verify which providers are detected. If you want to pin reviewers/lenses later, add a `.review-council/config.yml` to the target repo (team-shared) and/or a gitignored `.review-council/config.local.yml` (per-machine overrides) — full schema in the plugin's `rules/config.md`.
 
+### Used by `/review-pr-ultra`
+
+This repo's `review-pr-ultra` skill uses Review Council for cross-model verification when it's installed and a second reviewer family is available, and degrades gracefully to a solo `review-pr` pass (clearly labeled as such) when it isn't. No extra install steps beyond the above.
+
