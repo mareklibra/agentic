@@ -1,0 +1,52 @@
+# ── Review Council — full configuration reference ────────────────────────────
+# Every key below is shown with its built-in default. All keys are optional;
+# delete or comment any you don't need. `.review-council/config.local.yml` uses
+# this IDENTICAL schema and overrides config.yml per key. RC_* env vars win over
+# both files (settings.* and static_analysis.* only). An all-commented file = pure defaults.
+
+# reviewers:                     # enable/disable + optional model per reviewer
+#   claude:     { enabled: true,  model: "" }        # "" = the tool's own default model
+#   codex:      { enabled: true,  model: "" }
+#   google:     { enabled: true,  model: "" }
+#   perplexity: { enabled: true,  model: sonar }
+
+# lenses:                        # review perspectives
+#   # `providers` is ALWAYS a list; OMIT it for `auto` (diff-aware selection).
+#   # Pinning security.providers REPLACES the dedicated security reviewer (not additive).
+#   security:
+#     enabled: true
+#     # providers: [google, claude]     # omit -> auto
+#   correctness:
+#     enabled: true
+#     # providers: [claude]             # omit -> auto
+#   cross_file:
+#     enabled: true
+#     # providers: [codex]              # omit -> auto
+#   performance:
+#     enabled: true
+#     # providers: [google]             # omit -> auto
+#   design:
+#     enabled: true
+#     # providers: [claude]             # omit -> auto
+#   dependency:
+#     enabled: true
+#     # providers: [perplexity]         # default when omitted -> [perplexity]
+
+# settings:                      # run knobs (each also settable via its RC_* env var, which wins)
+#   personas:                     true     # RC_PERSONAS
+#   verify:                       true     # RC_VERIFY
+#   verify_max_findings:          12       # RC_VERIFY_CAP
+#   learn:                        true     # RC_LEARN
+#   min_reviewers:                2        # RC_MIN_REVIEWERS
+#   reviewer_timeout_seconds:     600      # RC_REVIEWER_TIMEOUT
+#   run_budget_seconds:           600      # RC_RUN_BUDGET
+#   auto_retry:                   false    # RC_AUTO_RETRY
+#   health_probe:                 false    # RC_HEALTH_PROBE
+#   health_probe_timeout_seconds: 20       # RC_HEALTH_PROBE_TIMEOUT
+#   claude_max_turns:             100      # RC_CLAUDE_MAX_TURNS
+
+# static_analysis:               # deterministic tool layer (each also settable via its RC_* env var, which wins)
+#   enabled: true                    # RC_STATIC_ANALYSIS
+#   tools: [gitleaks, trufflehog, osv-scanner, semgrep, ruff, shellcheck, actionlint, hadolint]   # RC_STATIC_TOOLS (comma-separated)
+#   timeout_seconds: 60              # RC_STATIC_TIMEOUT
+#   semgrep_config: p/default        # RC_SEMGREP_CONFIG — a registry pack (p/…) | off | a repo-owned ruleset path (auto is skipped: needs metrics)
