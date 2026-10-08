@@ -1,1 +1,4 @@
 .claude
+
+# Review Council per-machine config (not shared)
+.review-council/config.local.yml
