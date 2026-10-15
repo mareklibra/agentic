@@ -13,18 +13,20 @@ If review of local commit or branch before opening a PR is requested, compare ch
 
 Challenge all your findings to avoid falsy output.
 
-If the instructions of this skill are already in your context, just follow them; do not invoke it again.
+If the instructions of this skill are already in your context, do not call the Skill tool
+again, but still review the target yourself, fresh.
 
 ### Delta mode
 
 When asked to re-review after fixes ("delta"), the caller names the previous review's
-revision (a commit or range) and passes its findings. Review only the diff since that
-revision plus those findings: verify that each earlier finding is fixed, look for
-regressions the fixes introduced, and report anything new in the touched code. Still open
-with the severity summary table and close with the approval recommendation; skip
-"Strengths" and "Completeness" unless something changed there, and say explicitly that the
-rest is unchanged since the previous review. If no previous revision is named, ask for it
-instead of guessing.
+revision (a commit SHA or range) and passes its findings. First form your own view of the
+diff since that revision, and of the callers and consumers of the changed code (a regression
+often sits in an untouched caller, not in the hunk). Only then use the earlier findings as a
+verification list: is each one fixed, and did a fix introduce a regression? Report anything
+new in the touched code. Still open with the severity summary table, label the review
+"single-pass delta", and close with the approval recommendation; skip "Strengths" and
+"Completeness" unless something changed there, and say explicitly that the rest is unchanged
+since the previous review. If no previous revision is named, ask for it instead of guessing.
 
 ### Severity classification
 

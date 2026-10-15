@@ -28,8 +28,9 @@ The steps below use these names. Pick the column for the host you run in.
 
 **Plan file location (both hosts):** `<repo root>/.claude/plans/<name>.plan.md`.
 In a git worktree, "repo root" means the **main checkout**, not the worktree:
-resolve it as the parent directory of `git rev-parse --git-common-dir`
-(run as a plain command, no `-C`), and write plans there.
+resolve it as the parent directory of `git rev-parse --path-format=absolute --git-common-dir`
+(run as a plain command, no `-C`), and write plans there. A worktree-isolated session may
+refuse that write; then save the plan in your scratchpad and tell the user the path.
 Announce the path in chat when you create it.
 
 ## HARD RULE: never end on the plan-completion tool
@@ -61,7 +62,7 @@ Track this checklist:
 - [ ] 2. First plan draft in chat (no plan-completion tool)
 - [ ] 3. Grill remaining gaps; shared understanding
 - [ ] 4. Leave Plan mode (review, not implement); write plan file
-- [ ] 5. Isolated review-fix loop (max 2 rounds, +1 after a CRITICAL)
+- [ ] 5. Isolated review-fix loop (max 2 rounds, a 3rd only if round 2 changed the design)
 - [ ] 6. Convergence judgment; wait (do not implement)
 ```
 
@@ -74,8 +75,9 @@ Track this checklist:
 - Do not shorten research. The lazy-plan bar in step 2 applies **after** you
   know what already exists and what the change must touch.
 - Delegate the research to an Explore agent only when it spans many files
-  (each agent costs about 30-35k tokens of fixed overhead); otherwise read
-  narrow ranges yourself, since whatever you read stays in every later turn.
+  (each agent costs about 30-35k tokens of fixed overhead in the reports); read only
+  the ranges you need yourself, since whatever you read stays in every later turn.
+  This does not shorten the research, only where it happens.
   If the host's Plan mode requires Explore agents, follow the host.
 
 ### 2. First draft (chat only)
@@ -138,10 +140,11 @@ to **continue plan-and-review** (persist the plan, isolated review-fix). It is
 
 ### 5. Isolated review-fix loop
 
-Max **2** rounds, plus **one more** if the last round had a CRITICAL (a third
-round otherwise only when the user asks; a project rule may set another cap).
-Rounds beyond the first rarely change the plan's shape: stop earlier when
-findings stop doing so. Each round:
+Max **2** rounds. Run a **3rd and last** round (3 in total) when round 2 returned a
+CRITICAL, or WARNINGs whose accepted patches changed the plan's design and not just
+its wording, so that the patched design is reviewed once; more only when the user asks
+(a project rule may set another cap). In the reports, later rounds mostly returned
+wording and flip-flops: stop earlier when findings stop changing the plan's shape. Each round:
 
 1. Launch a **fresh** isolated reviewer subagent (see mapping). It must **not** receive this conversation’s
    history, prior reviews, triage, or your reasoning.
@@ -216,7 +219,7 @@ Then, in this chat:
   converged. If leftovers are over-build vs missing necessary work, say
   which.
 - **Do not implement.** Wait for the user. The plan file must carry a
-  Decisions section (grill answers, rejected alternatives): it is the
+  Decisions section (grill answers, rejected alternatives, no secrets): it is the
   hand-off, and continuing in a fresh session avoids carrying the research
   context into implementation.
 
