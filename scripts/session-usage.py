@@ -22,17 +22,18 @@ W = {"in": 1.0, "cw": 1.25, "cr": 0.1, "out": 5.0}
 def read_usage(path):
     """Return {message.id: (model, usage dict)}, last record per id wins."""
     seen = {}
-    for line in path.open(encoding="utf-8", errors="replace"):
-        try:
-            rec = json.loads(line)
-        except ValueError:
-            continue
-        msg = rec.get("message")
-        if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
-            continue
-        mid = msg.get("id") or rec.get("uuid")
-        if mid:
-            seen[mid] = (msg.get("model") or "?", msg["usage"])
+    with path.open(encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                continue
+            msg = rec.get("message") if isinstance(rec, dict) else None
+            if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
+                continue
+            mid = msg.get("id") or rec.get("uuid")
+            if mid:
+                seen[mid] = (msg.get("model") or "?", msg["usage"])
     return seen
 
 
@@ -66,6 +67,31 @@ def fmt(label, t):
     )
 
 
+def find_transcript(arg, project=None):
+    """Resolve a .jsonl path or a session-id prefix to one main transcript.
+
+    `project` is one project directory (it holds <session>.jsonl directly);
+    without it every project below ~/.claude/projects is searched. The nested
+    subagent files never match because they are named agent-*.jsonl and live
+    one level deeper.
+    """
+    if arg.suffix == ".jsonl":
+        return arg
+    if project:
+        hits = list(project.glob(f"{arg.name}*.jsonl"))
+        where = project
+    else:
+        where = Path.home() / ".claude" / "projects"
+        hits = list(where.glob(f"*/{arg.name}*.jsonl"))
+    if not hits:
+        sys.exit(f"no transcript for session {arg.name} under {where}")
+    if len(hits) > 1:
+        # A wrong session would silently give wrong numbers: make the user pick.
+        names = "\n  ".join(str(h) for h in sorted(hits))
+        sys.exit(f"session prefix {arg.name} is ambiguous:\n  {names}")
+    return hits[0]
+
+
 def main(argv):
     if not argv:
         sys.exit(__doc__)
@@ -74,17 +100,7 @@ def main(argv):
         i = argv.index("--project")
         project = Path(argv[i + 1]).expanduser()
         del argv[i : i + 2]
-    arg = Path(argv[0]).expanduser()
-    if arg.suffix == ".jsonl":
-        main_jsonl = arg
-    else:
-        base = project or Path.home() / ".claude" / "projects"
-        # A session-id prefix is enough; the nested subagent files never match
-        # because they are named agent-*.jsonl.
-        hits = list(base.glob(f"*/{arg.name}*.jsonl"))
-        if not hits:
-            sys.exit(f"no transcript for session {arg.name} under {base}")
-        main_jsonl = hits[0]
+    main_jsonl = find_transcript(Path(argv[0]).expanduser(), project)
     session_dir = main_jsonl.with_suffix("")
 
     rows = [("main session", read_usage(main_jsonl))]
