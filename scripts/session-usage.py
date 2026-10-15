@@ -9,9 +9,14 @@ usage block is repeated once per content block, a naive sum double-counts),
 and prints raw and price-weighted tokens per transcript and per model.
 
 Weights are a ratio model, not a bill: cache read 0.1x, cache write 1.25x,
-output 5x of a base input token.
+output 5x of a base input token, the same for every model (real prices differ
+per model, and 1-hour cache writes cost more than 5-minute ones). De-duplication
+is per transcript file; a message copied into a forked subagent transcript would
+be counted twice.
 """
+import glob
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -78,11 +83,11 @@ def find_transcript(arg, project=None):
     if arg.suffix == ".jsonl":
         return arg
     if project:
-        hits = list(project.glob(f"{arg.name}*.jsonl"))
+        hits = list(project.glob(f"{glob.escape(arg.name)}*.jsonl"))
         where = project
     else:
         where = Path.home() / ".claude" / "projects"
-        hits = list(where.glob(f"*/{arg.name}*.jsonl"))
+        hits = list(where.glob(f"*/{glob.escape(arg.name)}*.jsonl"))
     if not hits:
         sys.exit(f"no transcript for session {arg.name} under {where}")
     if len(hits) > 1:
@@ -92,27 +97,40 @@ def find_transcript(arg, project=None):
     return hits[0]
 
 
+def label_of(sub):
+    """Label of a subagent transcript from its .meta.json; never fails.
+
+    A missing, unreadable or oddly shaped .meta.json only loses the label, and
+    control characters are dropped so a label cannot drive the terminal.
+    """
+    label = sub.stem
+    try:
+        m = json.loads(sub.with_suffix(".meta.json").read_text())
+        if isinstance(m, dict):
+            label = f"{m.get('description') or sub.stem} (d{m.get('spawnDepth', '?')})"
+    except (OSError, ValueError):
+        pass
+    return re.sub(r"[\x00-\x1f\x7f]", " ", str(label))
+
+
 def main(argv):
     if not argv:
         sys.exit(__doc__)
     project = None
     if "--project" in argv:
         i = argv.index("--project")
+        if i + 1 >= len(argv):
+            sys.exit("--project needs a directory")
         project = Path(argv[i + 1]).expanduser()
         del argv[i : i + 2]
+    if not argv:
+        sys.exit(__doc__)
     main_jsonl = find_transcript(Path(argv[0]).expanduser(), project)
     session_dir = main_jsonl.with_suffix("")
 
     rows = [("main session", read_usage(main_jsonl))]
     for sub in sorted(session_dir.glob("**/agent-*.jsonl")):
-        label = sub.stem
-        meta = sub.with_suffix(".meta.json")
-        try:
-            m = json.loads(meta.read_text())
-            label = f"{m.get('description') or sub.stem} (d{m.get('spawnDepth', '?')})"
-        except (OSError, ValueError):
-            pass  # a missing .meta.json only loses the label
-        rows.append((label[:40], read_usage(sub)))
+        rows.append((label_of(sub)[:40], read_usage(sub)))
 
     grand = defaultdict(float)
     models = defaultdict(lambda: defaultdict(float))

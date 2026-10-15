@@ -54,6 +54,48 @@ class SessionUsage(unittest.TestCase):
                 su.find_transcript(Path("abc"), Path(d))
         self.assertIn("ambiguous", str(cm.exception))
 
+    def test_last_record_of_a_message_id_wins(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "s.jsonl"
+            p.write_text("\n".join([record("a", 5), record("a", 9)]))
+            t, _ = su.totals(su.read_usage(p))
+        self.assertEqual(t["out"], 9)
+
+    def test_weighted_uses_the_documented_ratios(self):
+        t = {"in": 10, "cw": 10, "cr": 100, "out": 2}
+        self.assertEqual(su.weighted(t), 10 + 12.5 + 10 + 10)
+
+    def test_label_survives_bad_meta_and_strips_control_chars(self):
+        with tempfile.TemporaryDirectory() as d:
+            sub = Path(d) / "agent-x.jsonl"
+            sub.write_text("")
+            self.assertEqual(su.label_of(sub), "agent-x")  # no .meta.json
+            sub.with_suffix(".meta.json").write_text("[1, 2]")  # not a dict
+            self.assertEqual(su.label_of(sub), "agent-x")
+            sub.with_suffix(".meta.json").write_text(
+                json.dumps({"description": "a\x1b[31mb", "spawnDepth": 2})
+            )
+            self.assertEqual(su.label_of(sub), "a [31mb (d2)")
+
+    def test_main_counts_nested_subagents_and_needs_a_project_value(self):
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "sess1.jsonl").write_text(record("m1", 1))
+            nested = root / "sess1" / "subagents" / "deeper"
+            nested.mkdir(parents=True)
+            (nested / "agent-n.jsonl").write_text(record("n1", 2))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                su.main(["sess1", "--project", str(root)])
+            text = out.getvalue()
+            self.assertIn("agent-n", text)
+            self.assertIn("TOTAL", text)
+            with self.assertRaises(SystemExit):
+                su.main(["sess1", "--project"])
+
     def test_unknown_prefix_exits(self):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(SystemExit):

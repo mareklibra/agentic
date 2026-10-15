@@ -24,10 +24,13 @@ presented as verified.
 Always state that this skill was used, and that it ran `review-pr` (Pass A)
 and, if applicable, `review-council:run` (Pass B), in the final report.
 
-**Delta mode.** When asked to re-run after fixes, Pass A is `review-pr` in its delta
-mode (incremental diff plus the previous findings), so the strict-superset claim above
-holds for the changed code. Run Pass B again only if the user asks or the fixes change
-boundary behaviour the earlier findings named.
+**Delta mode.** On a first run Pass A is `review-pr` unmodified, as above. When asked to
+re-run after fixes, the caller names the previous run's revision (commit SHA) and passes its
+findings, and Pass A is `review-pr` in its delta mode (see that skill). That is a narrower
+review than the first run, so the superset claim above applies to the first run only.
+Run Pass B again when the user asks, when the fixes exceed about 30 lines, or when they touch
+authentication, security or a process or network boundary; otherwise label the whole result
+"single-model delta" in the report header, never as a verified review.
 
 ## Step 1 — Target detection
 
