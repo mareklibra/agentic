@@ -17,11 +17,14 @@ If the instructions of this skill are already in your context, just follow them;
 
 ### Delta mode
 
-When asked to re-review after fixes ("delta"), review only the incremental diff since the
-previous review plus the previous findings: verify that each earlier finding is fixed, look
-for regressions the fixes introduced, and report anything new in the touched code. Skip
+When asked to re-review after fixes ("delta"), the caller names the previous review's
+revision (a commit or range) and passes its findings. Review only the diff since that
+revision plus those findings: verify that each earlier finding is fixed, look for
+regressions the fixes introduced, and report anything new in the touched code. Still open
+with the severity summary table and close with the approval recommendation; skip
 "Strengths" and "Completeness" unless something changed there, and say explicitly that the
-rest is unchanged since the previous review.
+rest is unchanged since the previous review. If no previous revision is named, ask for it
+instead of guessing.
 
 ### Severity classification
 

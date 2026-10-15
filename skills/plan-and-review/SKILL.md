@@ -76,6 +76,7 @@ Track this checklist:
 - Delegate the research to an Explore agent only when it spans many files
   (each agent costs about 30-35k tokens of fixed overhead); otherwise read
   narrow ranges yourself, since whatever you read stays in every later turn.
+  If the host's Plan mode requires Explore agents, follow the host.
 
 ### 2. First draft (chat only)
 
@@ -147,8 +148,9 @@ findings stop doing so. Each round:
 2. When it returns, **triage every finding** (accept / reject / defer) and
    **patch accepted items into the plan immediately**. Do not wait for the
    user per finding or per round. Print a triage table in this chat so they can
-   interrupt (first round in full; later rounds list only the accepted/changed
-   items and the severity counts).
+   interrupt (first round in full; later rounds: the severity counts, the
+   accepted items, and every rejected or deferred finding as a one-line row,
+   since a wrong rejection is the triage mistake that hides best).
 3. If a stop condition hits, go to step 6. Otherwise launch the next round.
 
 #### Subagent prompt (required contents)
