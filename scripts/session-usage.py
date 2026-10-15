@@ -65,6 +65,7 @@ def weighted(t):
 
 
 def fmt(label, t):
+    label = clean(label)
     return (
         f"{label:<40} msgs={int(t['msgs']):>4} in={int(t['in']):>8} "
         f"cw={int(t['cw']):>9} cr={int(t['cr']):>11} out={int(t['out']):>8} "
@@ -110,7 +111,12 @@ def label_of(sub):
             label = f"{m.get('description') or sub.stem} (d{m.get('spawnDepth', '?')})"
     except (OSError, ValueError):
         pass
-    return re.sub(r"[\x00-\x1f\x7f]", " ", str(label))
+    return clean(label)
+
+
+def clean(text):
+    """Replace C0/C1 control and bidi characters: transcript text must not drive the terminal."""
+    return re.sub("[\x00-\x1f\x7f-\x9f‪-‮⁦-⁩]", " ", str(text))
 
 
 def main(argv):

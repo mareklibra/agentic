@@ -29,8 +29,10 @@ The steps below use these names. Pick the column for the host you run in.
 **Plan file location (both hosts):** `<repo root>/.claude/plans/<name>.plan.md`.
 In a git worktree, "repo root" means the **main checkout**, not the worktree:
 resolve it as the parent directory of `git rev-parse --path-format=absolute --git-common-dir`
-(run as a plain command, no `-C`), and write plans there. A worktree-isolated session may
-refuse that write; then save the plan in your scratchpad and tell the user the path.
+(run as a plain command, no `-C`), and write plans there. If that directory does not end in
+`/.git` (bare repo, submodule, `.git` file), do not guess: ask, or use the scratchpad. A
+worktree-isolated session may refuse the write; then save the plan in your scratchpad and
+tell the user the path.
 Announce the path in chat when you create it.
 
 ## HARD RULE: never end on the plan-completion tool
@@ -62,7 +64,7 @@ Track this checklist:
 - [ ] 2. First plan draft in chat (no plan-completion tool)
 - [ ] 3. Grill remaining gaps; shared understanding
 - [ ] 4. Leave Plan mode (review, not implement); write plan file
-- [ ] 5. Isolated review-fix loop (max 2 rounds, a 3rd only if round 2 changed the design)
+- [ ] 5. Isolated review-fix loop (max 2 rounds, a 3rd if round 2 had a CRITICAL or changed the design)
 - [ ] 6. Convergence judgment; wait (do not implement)
 ```
 

@@ -96,6 +96,16 @@ class SessionUsage(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 su.main(["sess1", "--project"])
 
+    def test_clean_strips_c1_and_bidi_controls(self):
+        self.assertEqual(su.clean("a\x9bb‮c\x1bd"), "a b c d")
+
+    def test_glob_characters_in_the_prefix_are_literal(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "ab[1]x.jsonl").write_text("")
+            (Path(d) / "ab1x.jsonl").write_text("")
+            found = su.find_transcript(Path("ab[1]"), Path(d))
+        self.assertEqual(found.name, "ab[1]x.jsonl")
+
     def test_unknown_prefix_exits(self):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(SystemExit):

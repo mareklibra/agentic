@@ -28,9 +28,15 @@ and, if applicable, `review-council:run` (Pass B), in the final report.
 re-run after fixes, the caller names the previous run's revision (commit SHA) and passes its
 findings, and Pass A is `review-pr` in its delta mode (see that skill). That is a narrower
 review than the first run, so the superset claim above applies to the first run only.
-Run Pass B again when the user asks, when the fixes exceed about 30 lines, or when they touch
-authentication, security or a process or network boundary; otherwise label the whole result
-"single-model delta" in the report header, never as a verified review.
+Run Pass B again when the user asks, when the diff since the previous revision exceeds about
+30 changed lines (added plus deleted), or when it touches authentication, security or a
+process or network boundary; otherwise label the whole result "single-pass delta" (the same
+label `review-pr` uses, meaning one model, no council) in the report header, never as a
+verified review.
+
+**Reusing a Pass A.** When the caller names a `review-pr` run of this exact revision, on the
+same or a stronger model, that found nothing to fix, do not repeat it: take it as Pass A,
+say so in the report, and run only Pass B.
 
 ## Step 1 — Target detection
 
