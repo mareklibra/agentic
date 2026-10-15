@@ -24,6 +24,11 @@ presented as verified.
 Always state that this skill was used, and that it ran `review-pr` (Pass A)
 and, if applicable, `review-council:run` (Pass B), in the final report.
 
+**Delta mode.** When asked to re-run after fixes, Pass A is `review-pr` in its delta
+mode (incremental diff plus the previous findings), so the strict-superset claim above
+holds for the changed code. Run Pass B again only if the user asks or the fixes change
+boundary behaviour the earlier findings named.
+
 ## Step 1 — Target detection
 
 Do not build a unified detection step. Forward the user's raw argument or
