@@ -27,6 +27,9 @@ The steps below use these names. Pick the column for the host you run in.
 | `review-pr` skill fallback path | `~/.cursor/skills/review-pr/SKILL.md` | `~/.claude/skills/review-pr/SKILL.md` |
 
 **Plan file location (both hosts):** `<repo root>/.claude/plans/<name>.plan.md`.
+In a git worktree, "repo root" means the **main checkout**, not the worktree:
+resolve it as the parent directory of `git rev-parse --git-common-dir`
+(run as a plain command, no `-C`), and write plans there.
 Announce the path in chat when you create it.
 
 ## HARD RULE: never end on the plan-completion tool
@@ -58,7 +61,7 @@ Track this checklist:
 - [ ] 2. First plan draft in chat (no plan-completion tool)
 - [ ] 3. Grill remaining gaps; shared understanding
 - [ ] 4. Leave Plan mode (review, not implement); write plan file
-- [ ] 5. Isolated review-fix loop (max 3 rounds)
+- [ ] 5. Isolated review-fix loop (max 2 rounds, +1 after a CRITICAL)
 - [ ] 6. Convergence judgment; wait (do not implement)
 ```
 
@@ -70,6 +73,9 @@ Track this checklist:
   plan-completion tool.
 - Do not shorten research. The lazy-plan bar in step 2 applies **after** you
   know what already exists and what the change must touch.
+- Delegate the research to an Explore agent only when it spans many files
+  (each agent costs about 30-35k tokens of fixed overhead); otherwise read
+  narrow ranges yourself, since whatever you read stays in every later turn.
 
 ### 2. First draft (chat only)
 
@@ -131,14 +137,18 @@ to **continue plan-and-review** (persist the plan, isolated review-fix). It is
 
 ### 5. Isolated review-fix loop
 
-Max **3** rounds. Each round:
+Max **2** rounds, plus **one more** if the last round had a CRITICAL (a third
+round otherwise only when the user asks; a project rule may set another cap).
+Rounds beyond the first rarely change the plan's shape: stop earlier when
+findings stop doing so. Each round:
 
 1. Launch a **fresh** isolated reviewer subagent (see mapping). It must **not** receive this conversation’s
    history, prior reviews, triage, or your reasoning.
 2. When it returns, **triage every finding** (accept / reject / defer) and
    **patch accepted items into the plan immediately**. Do not wait for the
    user per finding or per round. Print a triage table in this chat so they can
-   interrupt.
+   interrupt (first round in full; later rounds list only the accepted/changed
+   items and the severity counts).
 3. If a stop condition hits, go to step 6. Otherwise launch the next round.
 
 #### Subagent prompt (required contents)
@@ -193,7 +203,7 @@ Stop on the **first** of:
 1. Latest isolated review has **no CRITICAL and no WARNING**.
 2. The round produced **zero accepted** findings (all rejected, deferred, or
    duplicates).
-3. **Three** review rounds have completed.
+3. The round cap (step 5) has been reached.
 
 Then, in this chat:
 
@@ -203,6 +213,9 @@ Then, in this chat:
   with leftover CRITICAL/WARNING, say so explicitly — do not pretend it
   converged. If leftovers are over-build vs missing necessary work, say
   which.
-- **Do not implement.** Wait for the user.
+- **Do not implement.** Wait for the user. The plan file must carry a
+  Decisions section (grill answers, rejected alternatives): it is the
+  hand-off, and continuing in a fresh session avoids carrying the research
+  context into implementation.
 
 The user may interrupt at any time; treat that as a stop.

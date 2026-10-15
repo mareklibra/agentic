@@ -13,6 +13,16 @@ If review of local commit or branch before opening a PR is requested, compare ch
 
 Challenge all your findings to avoid falsy output.
 
+If the instructions of this skill are already in your context, just follow them; do not invoke it again.
+
+### Delta mode
+
+When asked to re-review after fixes ("delta"), review only the incremental diff since the
+previous review plus the previous findings: verify that each earlier finding is fixed, look
+for regressions the fixes introduced, and report anything new in the touched code. Skip
+"Strengths" and "Completeness" unless something changed there, and say explicitly that the
+rest is unchanged since the previous review.
+
 ### Severity classification
 
 Tag every finding as **CRITICAL**, **WARNING**, or **SUGGESTION**:
