@@ -114,6 +114,14 @@ invoking `review-council:run`, tell it outright that this run ends at
 regardless of that plugin's own config. (Those step numbers belong to
 review-council's internal numbering, distinct from this skill's own steps.)
 
+Also ask it, in the same invocation text, to run its Step 0.2.1 health probe for this
+run (`settings.health_probe=true`, i.e. `RC_HEALTH_PROBE=true`). Step 2 only proves a
+family is installed; the probe drops a Codex or Google slot whose auth or quota is dead
+before Round 1 wastes a reviewer on it. It is fail-open, so a slow or throttled provider
+stays in. The Skill tool cannot set env vars, so this travels as text; if the council
+announces its roster without having probed, the per-machine fallback is
+`settings: { health_probe: true }` in `.review-council/config.local.yml`.
+
 Capture its judge ledger and report (findings, severity, badges).
 
 **Skip Pass B** (go to Step 7) on any of three conditions:
@@ -158,9 +166,9 @@ merging unrelated ones.
 SUGGESTION-tier review-pr-only findings skip this step entirely — tag them
 `[unverified]` directly in the final report.
 
-**Choosing the verifier.** If more than one repo-capable second family is
-available (both Codex and Google), prefer Codex; fall back to Google only if
-Codex isn't available.
+**Choosing the verifier.** Use the repo-capable families the council kept in its
+announced roster (not merely the installed ones). If both Codex and Google are
+in it, prefer Codex; fall back to Google only if Codex isn't available.
 
 **Batch, don't call once per finding.** Batch every review-pr-only
 CRITICAL/WARNING finding routed to that family into a **single** dispatch —
@@ -257,7 +265,8 @@ cause:
   review-council couldn't resolve a target).
 - `Pass B invocation failed: <review-council's own abort reason>` — the gate
   passed and a target resolved, but review-council's own run aborted
-  mid-execution.
+  mid-execution, including the case where its health probe dropped every
+  repo-capable family.
 
 In all three cases, report Pass A's already-complete results via this path —
 never discard them because Pass B didn't finish. State the specific
