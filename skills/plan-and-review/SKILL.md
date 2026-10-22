@@ -189,7 +189,16 @@ Give the subagent **only**:
 3. Grill decisions already settled.
 
 Do **not** give: prior review output, your triage, rejected-finding lists, or
-chat history.
+chat history. The one exception is the plan file's `## Verified facts` section
+(it reaches the reviewer inside the plan file, item 1).
+
+`## Verified facts` saves later rounds from re-researching the same tool
+behaviour. After each round, record there only **tool or platform behaviour you
+re-verified yourself** (re-ran the read-only command or re-read the cited
+file:line; a reviewer's claim alone does not qualify), one line each with its
+source. No opinions, findings, or triage. Add this line to the subagent prompt:
+the Verified facts are cited; spot-check at most one and do not re-research the
+rest.
 
 #### Main-agent validity bar
 
@@ -221,8 +230,8 @@ Then, in this chat:
   converged. If leftovers are over-build vs missing necessary work, say
   which.
 - **Do not implement.** Wait for the user. The plan file must carry a
-  Decisions section (grill answers, rejected alternatives, no secrets): it is the
-  hand-off, and continuing in a fresh session avoids carrying the research
-  context into implementation.
+  Decisions section (grill answers, rejected alternatives, no secrets) and its
+  Verified facts section: they are the hand-off, and continuing in a fresh
+  session avoids carrying the research context into implementation.
 
 The user may interrupt at any time; treat that as a stop.
