@@ -1,4 +1,4 @@
-"""Tests for session-usage.py. Run: python3 -I scripts/test_session_usage.py"""
+"""Tests for session-usage.py. Run: python3 -I skills/cost-analysis/scripts/test_session_usage.py"""
 import importlib.util
 import json
 import tempfile
