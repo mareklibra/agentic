@@ -27,6 +27,9 @@ The steps below use these names. Pick the column for the host you run in.
 | `review-pr` skill fallback path | `~/.cursor/skills/review-pr/SKILL.md` | `~/.claude/skills/review-pr/SKILL.md` |
 
 **Plan file location (both hosts):** `<repo root>/.claude/plans/<name>.plan.md`.
+In a git worktree, "repo root" means the **main checkout**, not the worktree:
+resolve it as the parent directory of `git rev-parse --git-common-dir`
+(run as a plain command, no `-C`), and write plans there.
 Announce the path in chat when you create it.
 
 ## HARD RULE: never end on the plan-completion tool

@@ -8,7 +8,7 @@
 #   claude:     { enabled: true,  model: "" }        # "" = the tool's own default model
 #   codex:      { enabled: true,  model: "" }
 #   google:     { enabled: true,  model: "" }
-#   perplexity: { enabled: true,  model: sonar }
+perplexity: { enabled: false,  model: sonar }
 
 # lenses:                        # review perspectives
 #   # `providers` is ALWAYS a list; OMIT it for `auto` (diff-aware selection).
