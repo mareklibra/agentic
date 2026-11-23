@@ -86,5 +86,14 @@ for skill_dir in "${SKILLS_SRC}"/*/; do
   done
 done
 
+# The global agent rules: one file shared by every tool, linked to a
+# stable path that ~/.claude/CLAUDE.md and the Cursor rule point at.
+RULES_SRC="${REPO_ROOT}/rules/AGENTS.md"
+RULES_DEST_DIR="${HOME}/.config/agents"
+if [[ -f "$RULES_SRC" ]]; then
+  mkdir -p "$RULES_DEST_DIR"
+  install_skill AGENTS.md "$(realpath "$RULES_SRC")" "$RULES_DEST_DIR"
+fi
+
 printf 'added=%s already=%s collisions=%s\n' "$added" "$already" "$collisions"
 exit 0
