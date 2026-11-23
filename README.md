@@ -8,7 +8,7 @@ My personal set of skills.
 ./scripts/install-skills.sh
 ```
 
-Symlinks each skill into `~/.cursor/skills` and `~/.claude/skills`, and the global agent rules [`rules/AGENTS.md`](rules/AGENTS.md) to `~/.config/agents/AGENTS.md`. Idempotent; reports name collisions without overwriting.
+Symlinks each skill into `~/.cursor/skills` and `~/.claude/skills`, and the global agent rules [`rules/AGENTS.md`](rules/AGENTS.md) to `~/.config/agents/AGENTS.md`. Idempotent; reports skill name collisions without overwriting, and moves an existing `~/.config/agents/AGENTS.md` to `AGENTS.md.bak.<timestamp>` before linking.
 
 ## Global agent rules
 
