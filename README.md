@@ -8,7 +8,16 @@ My personal set of skills.
 ./scripts/install-skills.sh
 ```
 
-Symlinks each skill into `~/.cursor/skills` and `~/.claude/skills`. Idempotent; reports name collisions without overwriting.
+Symlinks each skill into `~/.cursor/skills` and `~/.claude/skills`, and the global agent rules [`rules/AGENTS.md`](rules/AGENTS.md) to `~/.config/agents/AGENTS.md`. Idempotent; reports name collisions without overwriting.
+
+## Global agent rules
+
+[`rules/AGENTS.md`](rules/AGENTS.md) holds the project-independent rules: working style, git and worktrees, commit messages, plan files, review tiers, testing, data safety. A project's own `AGENTS.md` adds its gate command, Tier 2 areas and data hazards.
+
+Wire it into each tool once:
+
+- Claude Code: add `@~/.config/agents/AGENTS.md` to `~/.claude/CLAUDE.md`.
+- Cursor: an `alwaysApply: true` rule in `~/.cursor/rules/` that says to read `~/.config/agents/AGENTS.md` (Cursor rules cannot import files).
 
 ## External
 - Grilling: https://github.com/mattpocock/skills
